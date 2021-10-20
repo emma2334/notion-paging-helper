@@ -11,7 +11,7 @@ while (!pageId) {
 // Check if need to show page title
 let withTitle = false
 switch (
-  readlineSync.question('Do paging go with title under each link? [y/N] ')
+  readlineSync.question('Does paging go with title under each link? [y/N] ')
 ) {
   case 'y':
   case 'Y':
@@ -23,17 +23,8 @@ switch (
 
 // Set button style
 const text = {
-  prev: '← Prev',
-  next: 'Next →',
-}
-switch (readlineSync.question('Change link text? [y/N] ')) {
-  case 'y':
-  case 'Y':
-  case 'yes':
-  case 'YES':
-    text.prev = readlineSync.question('Previous page: ') || text.prev
-    text.next = readlineSync.question('Next Page: ') || text.next
-    break
+  prev: process.env.PREV_TEXT || '← Prev',
+  next: process.env.NEXT_TEXT || 'Next →',
 }
 
 /* Initializing a client */
@@ -43,45 +34,78 @@ const notion = new Client({
 
 /* Adding paging to each subpage */
 ;(async () => {
-  const response = await notion.blocks.children.list({ block_id: pageId })
+  let done = false
+  let total = 0
+  let start_cursor
+  let last_page
+  let errors = []
 
-  const subPage = response?.results
-    .filter(e => e.type === 'child_page')
-    .map(e => ({
-      id: e.id.replaceAll('-', ''),
-      title: e.child_page.title,
-    }))
+  while (!done) {
+    const response = await notion.blocks.children.list({
+      block_id: pageId,
+      start_cursor,
+      page_size: 50,
+    })
+    done = !response.has_more
+    start_cursor = response.next_cursor
 
-  console.log('\n======================')
-  console.log('Subpages count: ', subPage.length)
-  console.log('======================\n')
+    // Find block which is page
+    const subPage = response?.results
+      .filter(e => e.type === 'child_page')
+      .map(e => ({
+        id: e.id.replaceAll('-', ''),
+        title: e.child_page.title,
+      }))
 
-  Promise.all(
-    subPage.map(
-      async (e, i) =>
-        await appendPagingLink({
-          block: e,
-          prev: subPage[i - 1]?.id,
-          next: subPage[i + 1]?.id,
-        })
-    )
-  ).then(results => {
-    const total = subPage.length
-    const errors = results.flatMap((e, i) => (!e ? i : []))
-    console.log(`Done (${total - errors.length}/${total})`)
-  })
+    if (!subPage.length) continue
+
+    // Show progress
+    const pageNum =
+      subPage.length > 1
+        ? `#${total + 1}-${(total += subPage.length)}`
+        : `#${(total += subPage.length)}`
+    console.log(`\n[ Subpage ${pageNum} processing... ]`)
+
+    // Handle last page
+    last_page && subPage.unshift(last_page)
+    last_page = subPage[subPage.length - 1]
+
+    // Add prev and next btn to each page
+    await Promise.all(
+      subPage.map(
+        async (e, i) =>
+          await appendPagingLink({
+            block: e,
+            prev: subPage[i - 1]?.id,
+            next: subPage[i + 1]?.id,
+          })
+      )
+    ).then(results => {
+      errors = errors.concat(results.flatMap((e, i) => e || []))
+    })
+  }
+
+  // Show result
+  console.log(`\nDone (${total - errors.length}/${total}), error:`)
+  errors.length
+    ? console.error(errors.map(e => `${e.title} (id: ${e.id})`).join('\n'))
+    : console.log('None')
 })()
 
 async function appendPagingLink({ block, prev, next }) {
   try {
     const response = await notion.blocks.children.append({
       block_id: block.id,
-      children: [].concat(addLink(text.prev, prev), addLink(text.next, next)),
+      children: [
+        {
+          object: 'block',
+          type: 'paragraph',
+          paragraph: { text: [] },
+        },
+      ].concat(addLink(text.prev, prev), addLink(text.next, next)),
     })
-    return true
   } catch (error) {
-    console.error(`Error block: ${block.title}(id: ${block.id})\n`, error.body)
-    return false
+    return { ...block, error: error.body }
   }
 
   function addLink(name, blockId) {
