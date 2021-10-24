@@ -15,25 +15,14 @@ Clone the project to your computer and export the `Internal Integration Token` w
 $ git clone git@github.com:emma2334/notion-paging-helper.git
 $ npm i
 
-# Set token as an environment variable
-$ export NOTION_KEY=secret_...
-
 # Run
 $ node index.js
+[ Configuration ] # Only shown if there's no config.json
+Notion key: secret_...
+Would you like change button wording? [y/n]: y
+"← Prev": 上一篇
+"Next →": 下一篇
+
 Page ID: edebb5fcb6fd4e9ba36ee7f1191ade70
-Does paging go with title under each link? [y/N] y
-```
-
-# Change button wording
-
-If you don't like the default wording `← Prev` and `Next →` for buttons, you can set your own ones.
-
-```bash
-# change wording
-export PREV_TEXT=上一篇
-export NEXT_TEXT=下一篇
-
-# unset
-unset PREV_TEXT
-unset NEXT_TEXT
+Does paging go with title under each link? [y/n] y
 ```

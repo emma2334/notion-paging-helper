@@ -1,25 +1,39 @@
 const { Client } = require('@notionhq/client')
 const readlineSync = require('readline-sync')
+const fs = require('fs')
+
+let config = {}
+try {
+  config = require('./config')
+} catch (e) {
+  console.log('[ Configuration ]')
+  config.NOTION_KEY = readlineSync.question('Notion key: ', {
+    limit: /\S+/,
+    limitMessage: 'Notion key is required.',
+  })
+  if (readlineSync.keyInYNStrict('Would you like change button wording?')) {
+    config.PREV_TEXT = readlineSync.question('"← Prev": ', {
+      defaultInput: '← Prev',
+    })
+    config.NEXT_TEXT = readlineSync.question('"Next →": ', {
+      defaultInput: 'Next →',
+    })
+  }
+  fs.writeFileSync('config.json', JSON.stringify(config, null, 2))
+  console.log('\n')
+}
 
 /* Seting up */
 // Get page id
-let pageId = readlineSync.question('Page ID: ')
-while (!pageId) {
-  pageId = readlineSync.question('Page ID is required: ')
-}
+const pageId = readlineSync.question('Page ID: ', {
+  limit: /\S+/,
+  limitMessage: 'Page ID is required.',
+})
 
 // Check if need to show page title
-let withTitle = false
-switch (
-  readlineSync.question('Does paging go with title under each link? [y/N] ')
-) {
-  case 'y':
-  case 'Y':
-  case 'yes':
-  case 'YES':
-    withTitle = true
-    break
-}
+const withTitle = readlineSync.keyInYNStrict(
+  'Does paging go with title under each link?'
+)
 
 // Set button style
 const text = {
@@ -102,7 +116,10 @@ async function appendPagingLink({ block, prev, next }) {
           type: 'paragraph',
           paragraph: { text: [] },
         },
-      ].concat(addLink(text.prev, prev), addLink(text.next, next)),
+      ].concat(
+        addLink(config.PREV_TEXT, prev),
+        addLink(config.NEXT_TEXT, next)
+      ),
     })
   } catch (error) {
     return { ...block, error: error.body }
