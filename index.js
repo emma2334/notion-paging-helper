@@ -12,16 +12,32 @@ try {
     limitMessage: 'Notion key is required.',
   })
   if (readlineSync.keyInYNStrict('Would you like change button wording?')) {
-    config.PREV_TEXT = readlineSync.question('"← Prev": ', {
-      defaultInput: '← Prev',
-    })
-    config.NEXT_TEXT = readlineSync.question('"Next →": ', {
-      defaultInput: 'Next →',
-    })
+    config.PREV_TEXT = readlineSync.question('"← Prev": ')
+    config.NEXT_TEXT = readlineSync.question('"Next →": ')
   }
   fs.writeFileSync('config.json', JSON.stringify(config, null, 2))
-  console.log('\n')
+  console.log()
 }
+
+/* Initializing a client */
+let key = config.NOTION_KEY
+check_key: if (Array.isArray(key)) {
+  if (key.length < 2) {
+    key = key[0].key
+    break check_key
+  }
+
+  const index = readlineSync.keyInSelect(
+    key.map(e => e.name),
+    'Which key?',
+    { cancel: false }
+  )
+  key = key[index].key
+  console.log()
+}
+const notion = new Client({
+  auth: key,
+})
 
 /* Seting up */
 // Get page id
@@ -40,11 +56,6 @@ const text = {
   prev: process.env.PREV_TEXT || '← Prev',
   next: process.env.NEXT_TEXT || 'Next →',
 }
-
-/* Initializing a client */
-const notion = new Client({
-  auth: process.env.NOTION_KEY,
-})
 
 /* Adding paging to each subpage */
 ;(async () => {
@@ -117,8 +128,8 @@ async function appendPagingLink({ block, prev, next }) {
           paragraph: { text: [] },
         },
       ].concat(
-        addLink(config.PREV_TEXT, prev),
-        addLink(config.NEXT_TEXT, next)
+        addLink(config.PREV_TEXT || '← Prev', prev),
+        addLink(config.NEXT_TEXT || 'Next →', next)
       ),
     })
   } catch (error) {

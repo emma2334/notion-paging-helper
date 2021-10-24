@@ -26,3 +26,65 @@ Would you like change button wording? [y/n]: y
 Page ID: edebb5fcb6fd4e9ba36ee7f1191ade70
 Does paging go with title under each link? [y/n] y
 ```
+
+## Config.json
+
+Though the script will create one if config.json isn't found. You still can write it by yourself, and it allows you to use multiple keys.
+
+```js
+{
+  // --------------------------------------------------------------------
+  // Notion Key
+  // --------------------------------------------------------------------
+  //
+  // @param {(string | object[])} "NOTION_KEY"
+  // @param {string} "NOTION_KEY[].name"
+  // @param {string} "NOTION_KEY[].key"
+  //
+  // Examples:
+  //
+  //     "NOTION_KEY": "secret_..."
+  //
+  //     "NOTION_KEY": [
+  //       {
+  //         "name": "Key",
+  //         "key": "secret_..."
+  //       }
+  //     ]
+  //
+  //
+  // The internal integration token genertated from
+  // https://www.notion.so/my-integrations.
+  // --------------------------------------------------------------------
+  "NOTION_KEY": [
+    {
+      "name": "Key 1",
+      "key": "secret_..."
+    },
+    {
+      "name": "Key 2",
+      "key": "secret_..."
+    }
+  ],
+  // --------------------------------------------------------------------
+  // Prev Text
+  // --------------------------------------------------------------------
+  //
+  // @param {string} "PREV_TEXT"
+  // @default "← Prev"
+  //
+  // Wording for previous page button
+  // --------------------------------------------------------------------
+  "PREV_TEXT": "上一篇",
+  // --------------------------------------------------------------------
+  // Next Text
+  // --------------------------------------------------------------------
+  //
+  // @param {string} "NEXT_TEXT"
+  // @default "Next →"
+  //
+  // Wording for next page button
+  // --------------------------------------------------------------------
+  "NEXT_TEXT": "下一篇"
+}
+```
