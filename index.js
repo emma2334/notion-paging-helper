@@ -16,7 +16,7 @@ try {
     config.NEXT_TEXT = readlineSync.question('"Next →": ')
   }
   fs.writeFileSync('config.json', JSON.stringify(config, null, 2))
-  console.log()
+  console.log('\n')
 }
 
 /* Initializing a client */
@@ -33,18 +33,21 @@ check_key: if (Array.isArray(key)) {
     { cancel: false }
   )
   key = key[index].key
-  console.log()
+  console.log('\n')
 }
 const notion = new Client({
   auth: key,
 })
 
 /* Seting up */
-// Get page id
-const pageId = readlineSync.question('Page ID: ', {
-  limit: /\S+/,
-  limitMessage: 'Page ID is required.',
-})
+// Get id
+const pageId = readlineSync
+  .question('Target url or ID: ', {
+    limit: /\S+/,
+    limitMessage: 'Page ID is required.',
+  })
+  .match(/[^\/|-|#]+/g)
+  .at(-1)
 
 // Check if need to show page title
 const withTitle = readlineSync.keyInYNStrict(

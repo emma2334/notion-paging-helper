@@ -23,7 +23,7 @@ Would you like change button wording? [y/n]: y
 "← Prev": 上一篇
 "Next →": 下一篇
 
-Page ID: edebb5fcb6fd4e9ba36ee7f1191ade70
+Target url or ID: edebb5fcb6fd4e9ba36ee7f1191ade70
 Does paging go with title under each link? [y/n] y
 ```
 
