@@ -54,12 +54,6 @@ const withTitle = readlineSync.keyInYNStrict(
   'Does paging go with title under each link?'
 )
 
-// Set button style
-const text = {
-  prev: process.env.PREV_TEXT || '← Prev',
-  next: process.env.NEXT_TEXT || 'Next →',
-}
-
 /* Adding paging to each subpage */
 ;(async () => {
   let done = false
