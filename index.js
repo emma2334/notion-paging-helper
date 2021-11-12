@@ -88,9 +88,8 @@ const withTitle = readlineSync.keyInYNStrict(
         : `#${(total += subPage.length)}`
     console.log(`\n[ Subpage ${pageNum} processing... ]`)
 
-    // Handle last page
+    // Add last page from previous task if there's one
     last_page && subPage.unshift(last_page)
-    last_page = subPage[subPage.length - 1]
 
     // Add prev and next btn to each page
     await Promise.all(
@@ -100,11 +99,13 @@ const withTitle = readlineSync.keyInYNStrict(
             block: e,
             prev: subPage[i - 1]?.id,
             next: subPage[i + 1]?.id,
+            newLine: e.id !== last_page?.id,
           })
       )
     ).then(results => {
       errors = errors.concat(results.flatMap((e, i) => e || []))
     })
+    last_page = subPage[subPage.length - 1]
   }
 
   // Show result
@@ -114,17 +115,14 @@ const withTitle = readlineSync.keyInYNStrict(
     : console.log('None')
 })()
 
-async function appendPagingLink({ block, prev, next }) {
+async function appendPagingLink({ block, prev, next, newLine = true }) {
+  const content = newLine
+    ? [{ object: 'block', type: 'paragraph', paragraph: { text: [] } }]
+    : []
   try {
-    const response = await notion.blocks.children.append({
+    await notion.blocks.children.append({
       block_id: block.id,
-      children: [
-        {
-          object: 'block',
-          type: 'paragraph',
-          paragraph: { text: [] },
-        },
-      ].concat(
+      children: content.concat(
         addLink(config.PREV_TEXT || '← Prev', prev),
         addLink(config.NEXT_TEXT || 'Next →', next)
       ),
