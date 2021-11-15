@@ -1,43 +1,7 @@
-const { Client } = require('@notionhq/client')
 const readlineSync = require('readline-sync')
 const fs = require('fs')
-
-let config = {}
-try {
-  config = require('./config')
-} catch (e) {
-  console.log('[ Configuration ]')
-  config.NOTION_KEY = readlineSync.question('Notion key: ', {
-    limit: /\S+/,
-    limitMessage: 'Notion key is required.',
-  })
-  if (readlineSync.keyInYNStrict('Would you like change button wording?')) {
-    config.PREV_TEXT = readlineSync.question('"← Prev": ')
-    config.NEXT_TEXT = readlineSync.question('"Next →": ')
-  }
-  fs.writeFileSync('config.json', JSON.stringify(config, null, 2))
-  console.log('\n')
-}
-
-/* Initializing a client */
-let key = config.NOTION_KEY
-check_key: if (Array.isArray(key)) {
-  if (key.length < 2) {
-    key = key[0].key
-    break check_key
-  }
-
-  const index = readlineSync.keyInSelect(
-    key.map(e => e.name),
-    'Which key?',
-    { cancel: false }
-  )
-  key = key[index].key
-  console.log('\n')
-}
-const notion = new Client({
-  auth: key,
-})
+const { notion } = require('./init')
+const { setup, appendPagingLink } = require('./actions')
 
 /* Seting up */
 // Get id
@@ -99,6 +63,7 @@ const withTitle = readlineSync.keyInYNStrict(
             block: e,
             prev: subPage[i - 1]?.id,
             next: subPage[i + 1]?.id,
+            withTitle,
             newLine: e.id !== last_page?.id,
           })
       )
@@ -114,36 +79,3 @@ const withTitle = readlineSync.keyInYNStrict(
     ? console.error(errors.map(e => `${e.title} (id: ${e.id})`).join('\n'))
     : console.log('None')
 })()
-
-async function appendPagingLink({ block, prev, next, newLine = true }) {
-  const content = newLine
-    ? [{ object: 'block', type: 'paragraph', paragraph: { text: [] } }]
-    : []
-  try {
-    await notion.blocks.children.append({
-      block_id: block.id,
-      children: content.concat(
-        addLink(config.PREV_TEXT || '← Prev', prev),
-        addLink(config.NEXT_TEXT || 'Next →', next)
-      ),
-    })
-  } catch (error) {
-    return { ...block, error: error.body }
-  }
-
-  function addLink(name, blockId) {
-    let content = [
-      { type: 'text', text: { content: name, link: { url: `/${blockId}` } } },
-    ]
-    if (withTitle) {
-      content = content.concat([
-        { type: 'text', text: { content: '\n' } },
-        { type: 'mention', mention: { type: 'page', page: { id: blockId } } },
-      ])
-    }
-
-    return blockId
-      ? { object: 'block', type: 'paragraph', paragraph: { text: content } }
-      : []
-  }
-}
