@@ -1,5 +1,3 @@
-const readlineSync = require('readline-sync')
-const fs = require('fs')
 const { notion } = require('./init')
 const { getInfo, handleAll, single } = require('./actions')
 

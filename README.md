@@ -17,7 +17,7 @@ $ npm i
 
 # Run
 $ node index.js
-[ Configuration ] # Only shown if there's no config.json
+[ Configuration ] # Only shown when there's no config.json
 Notion key: secret_...
 Would you like change button wording? [y/n]: y
 "← Prev": 上一篇
@@ -27,64 +27,63 @@ Target url or ID: edebb5fcb6fd4e9ba36ee7f1191ade70
 Does paging go with title under each link? [y/n] y
 ```
 
-## Config.json
+## Apply to all pages under the target
+
+The target could be a page or a block.
+
+```bash
+$ node index.js
+$ node index.js all
+```
+
+## Only apply to specific page
+
+⚠️ The page should be the one which is directly under a page instead of a block.
+
+```bash
+$ node index.js single
+```
+
+# Config.json
 
 Though the script will create one if config.json isn't found. You still can write it by yourself, and it allows you to use multiple keys.
 
-```js
+```json
 {
-  // --------------------------------------------------------------------
-  // Notion Key
-  // --------------------------------------------------------------------
-  //
-  // @param {(string | object[])} "NOTION_KEY"
-  // @param {string} "NOTION_KEY[].name"
-  // @param {string} "NOTION_KEY[].key"
-  //
-  // Examples:
-  //
-  //     "NOTION_KEY": "secret_..."
-  //
-  //     "NOTION_KEY": [
-  //       {
-  //         "name": "Key",
-  //         "key": "secret_..."
-  //       }
-  //     ]
-  //
-  //
-  // The internal integration token genertated from
-  // https://www.notion.so/my-integrations.
-  // --------------------------------------------------------------------
-  "NOTION_KEY": [
-    {
-      "name": "Key 1",
-      "key": "secret_..."
-    },
-    {
-      "name": "Key 2",
-      "key": "secret_..."
-    }
-  ],
-  // --------------------------------------------------------------------
-  // Prev Text
-  // --------------------------------------------------------------------
-  //
-  // @param {string} "PREV_TEXT"
-  // @default "← Prev"
-  //
-  // Wording for previous page button
-  // --------------------------------------------------------------------
+  "NOTION_KEY": {
+    "key 1": "secret_...",
+    "key 2": "secret_..."
+  },
   "PREV_TEXT": "上一篇",
-  // --------------------------------------------------------------------
-  // Next Text
-  // --------------------------------------------------------------------
-  //
-  // @param {string} "NEXT_TEXT"
-  // @default "Next →"
-  //
-  // Wording for next page button
-  // --------------------------------------------------------------------
   "NEXT_TEXT": "下一篇"
 }
 ```
+
+| Key name             | Type                  | Description                       |
+| -------------------- | --------------------- | --------------------------------- |
+| NOTION_KEY           | srting, object, array | Integration token                 |
+| PREV_TEXT (optional) | string                | Wording for previous page button. |
+| NEXT_TEXT (optional) | string                | Wording for next page button.     |
+
+### NOTION_KEY
+
+The internal integration token genertated from https://www.notion.so/my-integrations.
+
+```js
+// string
+{ "NOTION_KEY": 'secret_...' }
+
+// object
+{ "NOTION_KEY": { "my_key": 'secret_...' } }
+
+// array
+{ "NOTION_KEY": [{ "name": 'my_key', "key": 'secret_...' }] }
+```
+
+### PREV_TEXT (Optional)
+
+Wording for previous page button.
+
+### NEXT_TEXT (Optional)
+
+Wording for next page button.
