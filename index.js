@@ -1,22 +1,24 @@
 const readlineSync = require('readline-sync')
 const fs = require('fs')
 const { notion } = require('./init')
-const { handleAll } = require('./actions')
+const { getInfo, handleAll, single } = require('./actions')
 
-/* Seting up */
-// Get id
-const pageId = readlineSync
-  .question('Target url or ID: ', {
-    limit: /\S+/,
-    limitMessage: 'Page ID is required.',
-  })
-  .match(/[^\/|\-|#]+/g)
-  .at(-1)
+switch (process.argv[2]) {
+  /* Add paging to each subpage */
+  case 'all':
+  case undefined:
+    handleAll(getInfo())
+    break
 
-// Check if need to show page title
-const withTitle = readlineSync.keyInYNStrict(
-  'Does paging go with title under each link?'
-)
+  /* Add paging to specific page */
+  case 'single':
+    console.log(
+      '\x1b[41m%s\x1b[0m',
+      '!!! The page should be the one which is directly under a page instead of a block. !!!'
+    )
+    single(getInfo())
+    break
 
-/* Adding paging to each subpage */
-handleAll(pageId, withTitle)
+  default:
+    console.error(`There's no such action`)
+}
