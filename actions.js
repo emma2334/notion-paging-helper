@@ -7,6 +7,12 @@ module.exports = {
   single,
 }
 
+/**
+ * Get the target id and check up link form.
+ *
+ * @param      {srting}  The question for asking page id
+ * @return     {Object}  The information of config
+ */
 function getInfo(idQuestion) {
   // Get id
   const pageId = readlineSync
@@ -24,6 +30,14 @@ function getInfo(idQuestion) {
   return { pageId, withTitle }
 }
 
+/**
+ * Add paging links to every subpage under the target page or block.
+ *
+ * @param      {Object}   arg1            The argument 1
+ * @param      {string}   arg1.pageId     The page identifier
+ * @param      {boolean}  arg1.withTitle  To show the page title under the link
+ *                                        or not
+ */
 async function handleAll({ pageId, withTitle }) {
   let done = false
   let total = 0
@@ -64,7 +78,7 @@ async function handleAll({ pageId, withTitle }) {
     await Promise.all(
       subPage.map(
         async (e, i) =>
-          await appendPagingLink({
+          await insertPagingLink({
             block: e,
             prev: subPage[i - 1]?.id,
             next: subPage[i + 1]?.id,
@@ -85,6 +99,14 @@ async function handleAll({ pageId, withTitle }) {
     : console.log('None')
 }
 
+/**
+ * Add paging links to specific page
+ *
+ * @param      {Object}   arg1            The argument 1.
+ * @param      {string}   arg1.pageId     The page identifier
+ * @param      {boolean}  arg1.withTitle  To show the page title under the link
+ *                                        or not
+ */
 async function single({ pageId, withTitle }) {
   const target = await notion.pages.retrieve({ page_id: pageId })
   const parentId = target.parent.page_id
@@ -125,7 +147,7 @@ async function single({ pageId, withTitle }) {
         }
 
       case 'end':
-        await appendPagingLink({
+        await insertPagingLink({
           block: { id: pageId, title: target.title },
           prev,
           next,
@@ -137,6 +159,15 @@ async function single({ pageId, withTitle }) {
   }
 }
 
+/**
+ * Add a link.
+ *
+ * @param      {string}        name       Page name
+ * @param      {string}        blockId    The block identifier
+ * @param      {boolean}       withTitle  To show the page title under the link
+ *                                        or not
+ * @return     {Object|Array}  The notion content
+ */
 function addLink(name, blockId, withTitle) {
   let content = [
     { type: 'text', text: { content: name, link: { url: `/${blockId}` } } },
@@ -152,7 +183,20 @@ function addLink(name, blockId, withTitle) {
     ? { object: 'block', type: 'paragraph', paragraph: { text: content } }
     : []
 }
-async function appendPagingLink({
+
+/**
+ * Insert paging links to page.
+ *
+ * @param      {Object}                   arg1                 The argument 1
+ * @param      {Object.<string, number>}  arg1.block           The target
+ * @param      {Object.<string, number>}  arg1.prev            The previous
+ * @param      {Object.<string, number>}  arg1.next            The next
+ * @param      {boolean}                  arg1.withTitle       To show the page
+ *                                                             title under the
+ *                                                             link or not
+ * @return     {Object}                   Error records
+ */
+async function insertPagingLink({
   block,
   prev,
   next,
