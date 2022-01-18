@@ -117,7 +117,7 @@ async function single({ pageId, withTitle }) {
     // Get content in parent page
     const parentContent = await notion.blocks.children.list({
       block_id: parentId,
-      start_cursor,
+      start_cursor: start_cursor || undefined,
     })
     start_cursor = parentContent.next_cursor
 
@@ -139,12 +139,10 @@ async function single({ pageId, withTitle }) {
         stage = 'find next'
 
       case 'find next':
-        if (targetIndex + 1 < pages.length) {
-          next = pages[targetIndex + 1]
-          stage = 'end'
-        } else if (parentContent.has_more) {
-          break
-        }
+        if (targetIndex + 1 === pages.length && parentContent.has_more) break
+        else if (targetIndex > -1) next = pages[targetIndex + 1]
+        else next = pages[0]
+        stage = 'end'
 
       case 'end':
         await insertPagingLink({
