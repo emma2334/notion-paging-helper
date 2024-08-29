@@ -1,20 +1,19 @@
-const { notion } = require('./init')
-const { getInfo, handleAll, single } = require('./actions')
+const { Notion } = require('./notion')
+const { getInfo } = require('./actions')
+
+const { workspace, pageId, withTitle } = getInfo()
+const notion = new Notion(workspace)
 
 switch (process.argv[2]) {
-  /* Add paging to each subpage */
+  // Add paging to each subpage
   case 'all':
   case undefined:
-    handleAll(getInfo())
+    notion.handleAll(pageId, withTitle)
     break
 
-  /* Add paging to specific page */
+  // Add paging to specific page
   case 'single':
-    console.log(
-      '\x1b[41m%s\x1b[0m',
-      '!!! The page should be the one which is directly under a page instead of a block. !!!'
-    )
-    single(getInfo())
+    notion.single(pageId, withTitle)
     break
 
   default:
