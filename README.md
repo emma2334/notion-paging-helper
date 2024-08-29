@@ -59,11 +59,11 @@ Though the script will create one if config.json isn't found. You still can writ
 }
 ```
 
-| Key name             | Type                  | Description                       |
-| -------------------- | --------------------- | --------------------------------- |
-| NOTION_KEY           | srting, object, array | Integration token                 |
-| PREV_TEXT (optional) | string                | Wording for previous page button. |
-| NEXT_TEXT (optional) | string                | Wording for next page button.     |
+| Key name             | Type                     | Description                       |
+| -------------------- | ------------------------ | --------------------------------- |
+| NOTION_KEY           | srting, string[], object | Integration token                 |
+| PREV_TEXT (optional) | string                   | Wording for previous page button. |
+| NEXT_TEXT (optional) | string                   | Wording for next page button.     |
 
 ### NOTION_KEY
 
@@ -73,12 +73,14 @@ The internal integration token genertated from https://www.notion.so/my-integrat
 // string
 { "NOTION_KEY": 'secret_...' }
 
-// object
-{ "NOTION_KEY": { "my_key": 'secret_...' } }
-
 // array
-{ "NOTION_KEY": [{ "name": 'my_key', "key": 'secret_...' }] }
+{ "NOTION_KEY": ['secret_...'] }
+
+// object
+{ "NOTION_KEY": { "key_name": 'secret_...' } }
 ```
+
+Recommend setting `key_name` to workspace names. The script will retrieve the corresponding key when the target is a Notion URL.
 
 ### PREV_TEXT (Optional)
 
