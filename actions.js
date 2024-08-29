@@ -21,9 +21,10 @@ function getInfo() {
 
   let workspace, pageId
   try {
-    const pathname = new URL(target).pathname.split('/')
-    workspace = pathname[1]
-    pageId = pathname.at(-1).split('-').at(-1)
+    const { hash, hostname, pathname } = new URL(target)
+    const path = pathname.split('/')
+    workspace = hostname === 'www.notion.so' ? path[1] : hostname.split('.')[0]
+    pageId = hash ? hash.slice(1) : path.at(-1).split('-').at(-1)
   } catch (e) {
     pageId = target
   }
