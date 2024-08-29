@@ -1,5 +1,6 @@
 const readlineSync = require('readline-sync')
 const fs = require('fs')
+const path = require('path')
 const { echo } = require('./logger')
 
 module.exports = {
@@ -43,16 +44,23 @@ function getConfig() {
   try {
     config = require('./config.json')
   } catch (e) {
-    echo('[ Configuration ]')
+    echo('\n[ Configuration ]')
     config.NOTION_KEY = readlineSync.question('Notion key: ', {
       limit: /\S+/,
       limitMessage: 'Notion key is required.',
     })
     if (readlineSync.keyInYNStrict('Would you like change button wording?')) {
-      config.PREV_TEXT = readlineSync.question('"← Prev": ')
-      config.NEXT_TEXT = readlineSync.question('"Next →": ')
+      config.PREV_TEXT = readlineSync.question('"← Prev": ', {
+        defaultInput: '← Prev',
+      })
+      config.NEXT_TEXT = readlineSync.question('"Next →": ', {
+        defaultInput: 'Next →',
+      })
     }
-    fs.writeFileSync('config.json', JSON.stringify(config, null, 2))
+    fs.writeFileSync(
+      path.resolve(__dirname, 'config.json'),
+      JSON.stringify(config, null, 2)
+    )
     echo('\n')
   }
 
