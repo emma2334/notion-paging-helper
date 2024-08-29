@@ -153,6 +153,12 @@ class Notion {
           console.log('Done!')
       }
       last_page = pages.at(-1)
+
+      // End process if can't find target and no more content in parent page
+      if (targetIndex < 0 && parentContent.next_cursor === null) {
+        stage = 'end'
+        console.log('The page needs to be directly under the parent page.')
+      }
     }
   }
 
