@@ -1,5 +1,6 @@
 const readlineSync = require('readline-sync')
 const fs = require('fs')
+const { echo } = require('./logger')
 
 module.exports = {
   getInfo,
@@ -42,7 +43,7 @@ function getConfig() {
   try {
     config = require('./config.json')
   } catch (e) {
-    console.log('[ Configuration ]')
+    echo('[ Configuration ]')
     config.NOTION_KEY = readlineSync.question('Notion key: ', {
       limit: /\S+/,
       limitMessage: 'Notion key is required.',
@@ -52,7 +53,7 @@ function getConfig() {
       config.NEXT_TEXT = readlineSync.question('"Next →": ')
     }
     fs.writeFileSync('config.json', JSON.stringify(config, null, 2))
-    console.log('\n')
+    echo('\n')
   }
 
   return config

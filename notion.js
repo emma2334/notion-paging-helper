@@ -1,6 +1,7 @@
 const readlineSync = require('readline-sync')
 const { Client } = require('@notionhq/client')
 const { getConfig } = require('./actions')
+const { echo, error } = require('./logger')
 
 class Notion {
   notion
@@ -73,7 +74,7 @@ class Notion {
         subPage.length > 1
           ? `#${total + 1}-${(total += subPage.length)}`
           : `#${(total += subPage.length)}`
-      console.log(`\n[ Subpage ${pageNum} processing... ]`)
+      echo(`\n[ Subpage ${pageNum} processing... ]`)
 
       // Add last page from previous task if there's one
       last_page && subPage.unshift(last_page)
@@ -97,10 +98,10 @@ class Notion {
     }
 
     // Show result
-    console.log(`\nDone (${total - errors.length}/${total}), error:`)
+    echo(`\nDone (${total - errors.length}/${total}), error:`)
     errors.length
-      ? console.error(errors.map(e => `${e.title} (id: ${e.id})`).join('\n'))
-      : console.log('None')
+      ? echo(errors.map(e => `${e.title} (id: ${e.id})`).join('\n'))
+      : echo('None')
   }
 
   /**
@@ -111,6 +112,11 @@ class Notion {
     const parentId = target.parent.page_id
     let stage = 'find target'
     let start_cursor, last_page, prev, next
+
+    if (!parentId) {
+      stage = 'end'
+      echo('Done!')
+    }
 
     while (stage !== 'end') {
       // Get content in parent page
@@ -150,14 +156,14 @@ class Notion {
             next,
             withTitle,
           })
-          console.log('Done!')
+          echo('Done!')
       }
       last_page = pages.at(-1)
 
       // End process if can't find target and no more content in parent page
       if (targetIndex < 0 && parentContent.next_cursor === null) {
         stage = 'end'
-        console.log('The page needs to be directly under the parent page.')
+        error('\nThe page needs to be directly under the parent page.')
       }
     }
   }
@@ -213,7 +219,7 @@ class Notion {
         ),
       })
     } catch (error) {
-      console.error(block.title, error)
+      echo(block.title, error)
       return { ...block }
     }
   }
