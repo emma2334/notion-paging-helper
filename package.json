@@ -4,5 +4,8 @@
   "dependencies": {
     "@notionhq/client": "^0.4.4",
     "readline-sync": "^1.4.10"
+  },
+  "engines": {
+    "node": "20.x"
   }
 }
