@@ -2,6 +2,7 @@ import readlineSync from 'readline-sync'
 import { Client } from '@notionhq/client'
 import { getConfig } from './actions'
 import { echo, error } from './logger'
+import { PageId, BlockId, Content, Paragraph, PageInfo, Page } from './types/notion'
 
 export class Notion {
   private notion: Client
@@ -45,12 +46,12 @@ export class Notion {
   /**
    * Add paging links to every subpage under the target page or block.
    */
-  async handleAll(pageId: string, withTitle: boolean) {
+  async handleAll(pageId: PageId, withTitle: boolean) {
     let done = false
     let total = 0
-    let start_cursor: string
-    let last_page
-    let errors = []
+    let start_cursor: BlockId | undefined
+    let last_page: PageInfo | undefined
+    let errors: PageInfo[] = []
 
     while (!done) {
       const response = await this.notion.blocks.children.list({
@@ -59,44 +60,45 @@ export class Notion {
         page_size: 50,
       })
       done = !response.has_more
-      start_cursor = response.next_cursor
+      start_cursor = response.next_cursor || undefined
 
       // Find block which is page
-      const subPage = response.results
-        .filter(e => "type" in e && e.type === 'child_page')
+      const subPages: PageInfo[] = response.results
+        .filter(e => 'child_page' in e)
         .map(e => ({
           id: e.id.replaceAll('-', ''),
           title: e.child_page.title,
         }))
 
-      if (!subPage.length) continue
+      if (!subPages.length) continue
 
       // Show progress
       const pageNum =
-        subPage.length > 1
-          ? `#${total + 1}-${(total += subPage.length)}`
-          : `#${(total += subPage.length)}`
+        subPages.length > 1
+          ? `#${total + 1}-${(total += subPages.length)}`
+          : `#${(total += subPages.length)}`
       echo(`\n[ Subpage ${pageNum} processing... ]`)
 
       // Add last page from previous task if there's one
-      last_page && subPage.unshift(last_page)
+      if (last_page)
+        subPages.unshift(last_page)
 
       // Add prev and next btn to each page
       await Promise.all(
-        subPage.map(
+        subPages.map(
           async (e, i) =>
             await this.insertPagingLink({
               block: e,
-              prev: subPage[i - 1]?.id,
-              next: subPage[i + 1]?.id,
+              prev: subPages[i - 1]?.id,
+              next: subPages[i + 1]?.id,
               withTitle,
               newLine: e.id !== last_page?.id,
             })
         )
       ).then(results => {
-        errors = errors.concat(results.flatMap((e, i) => e || []))
+        errors = errors.concat(results.flatMap((e) => e || []))
       })
-      last_page = subPage.at(-1)
+      last_page = subPages.at(-1)
     }
 
     // Show result
@@ -109,29 +111,33 @@ export class Notion {
   /**
    * Add paging links to specific page
    */
-  async single(pageId: string, withTitle: boolean) {
-    const target = await this.notion.pages.retrieve({ page_id: pageId })
-    const parentId = 'parent' in target && 'page_id' in target.parent && target.parent.page_id
-    let stage = 'find target'
-    let start_cursor: string, last_page: string, prev: string, next: string
+  async single(pageId: PageId, withTitle: boolean) {
+    const target = (await this.notion.pages.retrieve({ page_id: pageId })) as Page
 
-    if (!parentId) {
-      stage = 'end'
+    // The page has no sibling pages
+    if (!('page_id' in target.parent)) {
       echo('Done!')
+      return
     }
 
-    while (stage !== 'end') {
+    const parentId = target.parent.page_id
+    let stage = 'find target'
+    let start_cursor: BlockId | undefined
+    let last_page: PageId | undefined
+    let prev: PageId | undefined
+    let next: PageId | undefined
 
+    while (stage !== 'end') {
       // Get content in parent page
       const parentContent = await this.notion.blocks.children.list({
         block_id: parentId,
-        start_cursor: start_cursor || undefined,
+        start_cursor
       })
-      start_cursor = parentContent.next_cursor
+      start_cursor = parentContent.next_cursor || undefined
 
       // Filter out subpages
       const pages = parentContent.results
-        .filter(e => "type" in e && e.type === 'child_page')
+        .filter(e => 'child_page' in e)
         .map(e => e.id.replaceAll('-', ''))
 
       if (!pages.length) continue
@@ -139,17 +145,14 @@ export class Notion {
 
       switch (stage) {
         case 'find target':
-
           if (targetIndex > -1) stage = 'find prev'
           else break
 
         case 'find prev':
-
           prev = pages[targetIndex - 1] || last_page
           stage = 'find next'
 
         case 'find next':
-
           if (targetIndex + 1 === pages.length && parentContent.has_more) break
           else if (targetIndex > -1) next = pages[targetIndex + 1]
           else next = pages[0]
@@ -157,7 +160,7 @@ export class Notion {
 
         case 'end':
           await this.insertPagingLink({
-            block: { id: pageId, title: target.title },
+            block: { id: pageId },
             prev,
             next,
             withTitle,
@@ -177,28 +180,35 @@ export class Notion {
   /**
    * Add a link.
    */
-  addLink(hint: string, blockId: string, withTitle: boolean): Content {
-    let content: Content = [
-      { type: 'text', text: { content: hint, link: { url: `/${blockId}` } } },
+  addLink(hint: string, pageId: PageId | undefined, withTitle: boolean): Paragraph[] {
+    if (!pageId)
+      return []
+
+    let content: Paragraph['paragraph']['text'] = [
+      { text: { content: hint, link: { url: `/${pageId}` } } },
     ]
     if (withTitle) {
       content = content.concat([
-        { type: 'text', text: { content: '\n' } },
-        { type: 'mention', mention: { type: 'page', page: { id: blockId } } },
+        { text: { content: '\n' } },
+        { mention: { page: { id: pageId } } },
       ])
     }
 
-    return blockId
-      ? { object: 'block', type: 'paragraph', paragraph: { text: content } }
-      : []
+    return [{ object: 'block', paragraph: { text: content } }]
   }
 
   /**
    * Insert paging links to page.
    */
-  async insertPagingLink({ block, prev, next, withTitle, newLine = true }) {
+  async insertPagingLink({ block, prev, next, withTitle, newLine = true }: {
+    block: PageInfo
+    prev?: PageId
+    next?: PageId
+    withTitle: boolean
+    newLine?: boolean
+  }) {
     const content: Content = newLine
-      ? [{ object: 'block', type: 'paragraph', paragraph: { text: [] } }]
+      ? [{ object: 'block', paragraph: { text: [] } }]
       : []
 
     try {
