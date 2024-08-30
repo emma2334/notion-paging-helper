@@ -40,7 +40,7 @@ export function getConfig() {
     NEXT_TEXT?: string
   } = { NOTION_KEY: '' }
   try {
-    config = require('./config.json')
+    config = require('../config.json')
   } catch (e) {
     echo('\n[ Configuration ]')
     config.NOTION_KEY = readlineSync.question('Notion key: ', {
@@ -55,8 +55,9 @@ export function getConfig() {
         defaultInput: 'Next →',
       })
     }
+
     fs.writeFileSync(
-      path.resolve(import.meta.dirname, 'config.json'),
+      path.resolve(import.meta.dirname, '../config.json'),
       JSON.stringify(config, null, 2)
     )
     echo('\n')

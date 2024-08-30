@@ -3,13 +3,16 @@
   "version": "1.1.0",
   "type": "module",
   "scripts": {
-    "start": "tsx index.ts"
+    "start": "tsx src/index.ts",
+    "build": "pkgroll"
   },
+  "exports": "./dist/index.mjs",
   "dependencies": {
     "@notionhq/client": "^0.4.4",
     "readline-sync": "^1.4.10"
   },
   "devDependencies": {
+    "pkgroll": "^2.4.2",
     "tsx": "^4.19.0",
     "typescript": "^5.5.4"
   },
