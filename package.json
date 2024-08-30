@@ -1,11 +1,16 @@
 {
   "name": "notion-paging-helper",
   "version": "1.1.0",
+  "type": "module",
+  "scripts": {
+    "start": "tsx index.ts"
+  },
   "dependencies": {
     "@notionhq/client": "^0.4.4",
     "readline-sync": "^1.4.10"
   },
   "devDependencies": {
+    "tsx": "^4.19.0",
     "typescript": "^5.5.4"
   },
   "engines": {

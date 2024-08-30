@@ -1,27 +1,21 @@
-const readlineSync = require('readline-sync')
-const fs = require('fs')
-const path = require('path')
-const { echo } = require('./logger')
-
-module.exports = {
-  getInfo,
-  getConfig,
-}
+import readlineSync from 'readline-sync'
+import fs from 'fs'
+import path from 'path'
+import { echo } from './logger'
+import Module from "node:module";
+const require = Module.createRequire(import.meta.url);
 
 /**
  * Get the target id and check up link form.
- *
- * @param      {srting}  The question for asking page id
- * @return     {Object}  The information of config
  */
-function getInfo() {
+export function getInfo() {
   // Get id
   const target = readlineSync.question(`Target url or ID: `, {
     limit: /\S+/,
     limitMessage: `ID is required.`,
   })
 
-  let workspace, pageId
+  let workspace: string, pageId: string
   try {
     const { hash, hostname, pathname } = new URL(target)
     const path = pathname.split('/')
@@ -32,15 +26,19 @@ function getInfo() {
   }
 
   // Check if need to show page title
-  const withTitle = readlineSync.keyInYNStrict(
+  const withTitle: boolean = readlineSync.keyInYNStrict(
     'Does paging go with title under each link?'
   )
 
   return { workspace, pageId, withTitle }
 }
 
-function getConfig() {
-  let config = {}
+export function getConfig() {
+  let config: {
+    NOTION_KEY: string | string[] | Record<string, string>
+    PREV_TEXT?: string
+    NEXT_TEXT?: string
+  } = { NOTION_KEY: '' }
   try {
     config = require('./config.json')
   } catch (e) {
@@ -58,7 +56,7 @@ function getConfig() {
       })
     }
     fs.writeFileSync(
-      path.resolve(__dirname, 'config.json'),
+      path.resolve(import.meta.dirname, 'config.json'),
       JSON.stringify(config, null, 2)
     )
     echo('\n')

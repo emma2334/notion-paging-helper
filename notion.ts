@@ -1,17 +1,20 @@
-const readlineSync = require('readline-sync')
-const { Client } = require('@notionhq/client')
-const { getConfig } = require('./actions')
-const { echo, error } = require('./logger')
+import readlineSync from 'readline-sync'
+import { Client } from '@notionhq/client'
+import { getConfig } from './actions'
+import { echo, error } from './logger'
 
-class Notion {
-  notion
-  config = getConfig()
-  constructor(workspace) {
+export class Notion {
+  private notion: Client
+  private config = getConfig()
+
+  constructor(workspace?: string) {
     const { NOTION_KEY } = this.config
     // Get key
-    let notionKey = NOTION_KEY
-    if (typeof NOTION_KEY === 'object') {
-      let keys, names
+    let notionKey: string | undefined
+    if (typeof NOTION_KEY === 'string') {
+      notionKey = NOTION_KEY
+    } else if (typeof NOTION_KEY === 'object') {
+      let keys: string[], names: string[]
       if (NOTION_KEY instanceof Array) {
         keys = NOTION_KEY
         names = NOTION_KEY
@@ -20,12 +23,11 @@ class Notion {
         names = Object.keys(NOTION_KEY)
       }
 
-      // Contain only one key
       if (keys.length === 1) {
+        // Contain only one key
         notionKey = keys[0]
-      }
-      // Get specific key
-      else if (names.includes(workspace)) {
+      } else if (workspace && names.includes(workspace)) {
+        // Get specific key
         notionKey = NOTION_KEY[workspace]
       } else {
         // Select the key to use
@@ -43,10 +45,10 @@ class Notion {
   /**
    * Add paging links to every subpage under the target page or block.
    */
-  async handleAll(pageId, withTitle) {
+  async handleAll(pageId: string, withTitle: boolean) {
     let done = false
     let total = 0
-    let start_cursor
+    let start_cursor: string
     let last_page
     let errors = []
 
@@ -61,7 +63,7 @@ class Notion {
 
       // Find block which is page
       const subPage = response.results
-        .filter(e => e.type === 'child_page')
+        .filter(e => "type" in e && e.type === 'child_page')
         .map(e => ({
           id: e.id.replaceAll('-', ''),
           title: e.child_page.title,
@@ -107,11 +109,11 @@ class Notion {
   /**
    * Add paging links to specific page
    */
-  async single(pageId, withTitle) {
+  async single(pageId: string, withTitle: boolean) {
     const target = await this.notion.pages.retrieve({ page_id: pageId })
-    const parentId = target.parent.page_id
+    const parentId = 'parent' in target && 'page_id' in target.parent && target.parent.page_id
     let stage = 'find target'
-    let start_cursor, last_page, prev, next
+    let start_cursor: string, last_page: string, prev: string, next: string
 
     if (!parentId) {
       stage = 'end'
@@ -119,6 +121,7 @@ class Notion {
     }
 
     while (stage !== 'end') {
+
       // Get content in parent page
       const parentContent = await this.notion.blocks.children.list({
         block_id: parentId,
@@ -128,7 +131,7 @@ class Notion {
 
       // Filter out subpages
       const pages = parentContent.results
-        .filter(e => e.type === 'child_page')
+        .filter(e => "type" in e && e.type === 'child_page')
         .map(e => e.id.replaceAll('-', ''))
 
       if (!pages.length) continue
@@ -136,14 +139,17 @@ class Notion {
 
       switch (stage) {
         case 'find target':
+
           if (targetIndex > -1) stage = 'find prev'
           else break
 
         case 'find prev':
+
           prev = pages[targetIndex - 1] || last_page
           stage = 'find next'
 
         case 'find next':
+
           if (targetIndex + 1 === pages.length && parentContent.has_more) break
           else if (targetIndex > -1) next = pages[targetIndex + 1]
           else next = pages[0]
@@ -170,16 +176,10 @@ class Notion {
 
   /**
    * Add a link.
-   *
-   * @param      {string}        name       Page name
-   * @param      {string}        blockId    The block identifier
-   * @param      {boolean}       withTitle  To show the page title under the link
-   *                                        or not
-   * @return     {Object|Array}  The notion content
    */
-  addLink(name, blockId, withTitle) {
-    let content = [
-      { type: 'text', text: { content: name, link: { url: `/${blockId}` } } },
+  addLink(hint: string, blockId: string, withTitle: boolean): Content {
+    let content: Content = [
+      { type: 'text', text: { content: hint, link: { url: `/${blockId}` } } },
     ]
     if (withTitle) {
       content = content.concat([
@@ -195,18 +195,9 @@ class Notion {
 
   /**
    * Insert paging links to page.
-   *
-   * @param      {Object}                   arg1                 The argument 1
-   * @param      {Object.<string, number>}  arg1.block           The target
-   * @param      {Object.<string, number>}  arg1.prev            The previous
-   * @param      {Object.<string, number>}  arg1.next            The next
-   * @param      {boolean}                  arg1.withTitle       To show the page
-   *                                                             title under the
-   *                                                             link or not
-   * @return     {Object}                   Error records
    */
   async insertPagingLink({ block, prev, next, withTitle, newLine = true }) {
-    const content = newLine
+    const content: Content = newLine
       ? [{ object: 'block', type: 'paragraph', paragraph: { text: [] } }]
       : []
 
@@ -224,5 +215,3 @@ class Notion {
     }
   }
 }
-
-module.exports = { Notion }

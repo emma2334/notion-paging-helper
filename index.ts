@@ -1,6 +1,6 @@
-const { Notion } = require('./notion')
-const { getInfo } = require('./actions')
-const { echo } = require('./logger')
+import { Notion } from './notion'
+import { getInfo } from './actions'
+import { echo } from './logger'
 
 switch (process.argv[2]) {
   // Add paging to each subpage
