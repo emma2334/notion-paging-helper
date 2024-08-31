@@ -26,7 +26,7 @@ export function getInfo() {
   }
 
   // Check if need to show page title
-  const withTitle: boolean = readlineSync.keyInYNStrict(
+  const withTitle = readlineSync.keyInYNStrict(
     'Does paging go with title under each link?'
   )
 
