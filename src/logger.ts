@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 export function echo(...args) {
   console.log(...args)
 }

@@ -2,7 +2,14 @@ import readlineSync from 'readline-sync'
 import { Client } from '@notionhq/client'
 import { getConfig } from './actions'
 import { echo, error } from './logger'
-import { PageId, BlockId, Content, Paragraph, PageInfo, Page } from './types/notion'
+import {
+  PageId,
+  BlockId,
+  Content,
+  Paragraph,
+  PageInfo,
+  Page,
+} from './types/notion'
 
 export class Notion {
   private notion: Client
@@ -80,8 +87,7 @@ export class Notion {
       echo(`\n[ Subpage ${pageNum} processing... ]`)
 
       // Add last page from previous task if there's one
-      if (last_page)
-        subPages.unshift(last_page)
+      if (last_page) subPages.unshift(last_page)
 
       // Add prev and next btn to each page
       await Promise.all(
@@ -96,23 +102,27 @@ export class Notion {
             })
         )
       ).then(results => {
-        errors = errors.concat(results.flatMap((e) => e || []))
+        errors = errors.concat(results.flatMap(e => e || []))
       })
       last_page = subPages.at(-1)
     }
 
     // Show result
     echo(`\nDone (${total - errors.length}/${total}), error:`)
-    errors.length
-      ? echo(errors.map(e => `${e.title} (id: ${e.id})`).join('\n'))
-      : echo('None')
+    if (errors.length) {
+      echo(errors.map(e => `${e.title} (id: ${e.id})`).join('\n'))
+    } else {
+      echo('None')
+    }
   }
 
   /**
    * Add paging links to specific page
    */
   async single(pageId: PageId, withTitle: boolean) {
-    const target = (await this.notion.pages.retrieve({ page_id: pageId })) as Page
+    const target = (await this.notion.pages.retrieve({
+      page_id: pageId,
+    })) as Page
 
     // The page has no sibling pages
     if (!('page_id' in target.parent)) {
@@ -131,7 +141,7 @@ export class Notion {
       // Get content in parent page
       const parentContent = await this.notion.blocks.children.list({
         block_id: parentId,
-        start_cursor
+        start_cursor,
       })
       start_cursor = parentContent.next_cursor || undefined
 
@@ -143,6 +153,7 @@ export class Notion {
       if (!pages.length) continue
       const targetIndex = pages.findIndex(e => e === pageId)
 
+      /* eslint-disable no-fallthrough */
       switch (stage) {
         case 'find target':
           if (targetIndex > -1) stage = 'find prev'
@@ -167,6 +178,8 @@ export class Notion {
           })
           echo('Done!')
       }
+      /* eslint-enable */
+
       last_page = pages.at(-1)
 
       // End process if can't find target and no more content in parent page
@@ -180,9 +193,12 @@ export class Notion {
   /**
    * Add a link.
    */
-  addLink(hint: string, pageId: PageId | undefined, withTitle: boolean): Paragraph[] {
-    if (!pageId)
-      return []
+  addLink(
+    hint: string,
+    pageId: PageId | undefined,
+    withTitle: boolean
+  ): Paragraph[] {
+    if (!pageId) return []
 
     let content: Paragraph['paragraph']['text'] = [
       { text: { content: hint, link: { url: `/${pageId}` } } },
@@ -200,7 +216,13 @@ export class Notion {
   /**
    * Insert paging links to page.
    */
-  async insertPagingLink({ block, prev, next, withTitle, newLine = true }: {
+  async insertPagingLink({
+    block,
+    prev,
+    next,
+    withTitle,
+    newLine = true,
+  }: {
     block: PageInfo
     prev?: PageId
     next?: PageId

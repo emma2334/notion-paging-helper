@@ -2,8 +2,8 @@ import readlineSync from 'readline-sync'
 import fs from 'fs'
 import path from 'path'
 import { echo } from './logger'
-import Module from "node:module";
-const require = Module.createRequire(import.meta.url);
+import { createRequire } from 'module'
+const require = createRequire(import.meta.url)
 
 /**
  * Get the target id and check up link form.
