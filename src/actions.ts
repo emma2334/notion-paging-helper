@@ -1,8 +1,10 @@
 import readlineSync from 'readline-sync'
 import fs from 'fs'
 import path from 'path'
-import { echo } from './logger'
 import { createRequire } from 'module'
+import { echo } from './logger'
+import { parseTarget } from './utils'
+
 const require = createRequire(import.meta.url)
 
 /**
@@ -15,15 +17,7 @@ export function getInfo() {
     limitMessage: `ID is required.`,
   })
 
-  let workspace: string, pageId: string
-  try {
-    const { hash, hostname, pathname } = new URL(target)
-    const path = pathname.split('/')
-    workspace = hostname === 'www.notion.so' ? path[1] : hostname.split('.')[0]
-    pageId = hash ? hash.slice(1) : path.at(-1).split('-').at(-1)
-  } catch (e) {
-    pageId = target
-  }
+  const { workspace, pageId } = parseTarget(target)
 
   // Check if need to show page title
   const withTitle = readlineSync.keyInYNStrict(
