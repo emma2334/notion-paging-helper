@@ -46,12 +46,22 @@ describe('parseTarget', () => {
       ['test', { workspace: undefined, pageId: undefined }],
       [
         'www.notion.so/emma-chung/Paging-demo-a9e27522eaf34b7f856c737ffea175b7?pvs=4',
-        { workspace: undefined, pageId },
+        { workspace, pageId },
       ],
       [
         'https://www.notio.so/emma-chung/Paging-demo-a9e27522eaf34b7f856c737ffea175b7',
         { workspace: undefined, pageId },
         'not notion url',
+      ],
+      [
+        'https://www.notion.so/emma-chung/Page-1-e2ad44a0143e46a9ad1ba4de2fa07956?pvs=4https://www.notion.so/emma-chung/Paging-demo-a9e27522eaf34b7f856c737ffea175b7?pvs=4',
+        { workspace, pageId },
+        'multiple urls',
+      ],
+      [
+        'https://www.notion.so/test/Page-1-e2ad44a0143e46a9ad1ba4de2fa07956https://www.notion.so/emma-chung/Paging-demo-a9e27522eaf34b7f856c737ffea175b7',
+        { workspace, pageId },
+        'multiple urls from different workspace',
       ],
     ]
 

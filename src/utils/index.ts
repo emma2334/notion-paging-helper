@@ -1,16 +1,18 @@
 export function parseTarget(target: string) {
-  let workspace: string | undefined
-  let pageId = target.match(/([a-f0-9]{32})/g)?.at(-1)
-  try {
-    const { hash, hostname, pathname } = new URL(target)
-    const path = pathname.split('/')
-    if (!hostname.includes('notion')) throw new Error()
-
-    workspace = hostname === 'www.notion.so' ? path[1] : hostname.split('.')[0]
-    pageId = hash ? hash.slice(1) : path.at(-1).split('-').at(-1)
-  } catch (e) {
-    pageId = target.match(/([a-f0-9]{32})/g)?.at(-1)
+  // RULE: get the workspace name from the last notion url
+  let workspace
+  const workspaceUrl =
+    target
+      .match(/([a-zA-Z0-1-]+)\.notion\.site|www\.notion\.so\/([a-zA-Z0-1-]+)/g)
+      ?.at(-1) ?? ''
+  if (workspaceUrl.length) {
+    workspace = workspaceUrl.includes('www.notion.so')
+      ? workspaceUrl.split('/').at(-1)
+      : workspaceUrl.split('.')[0]
   }
+
+  // RULE: get the last id
+  const pageId = target.match(/([a-f0-9]{32})/g)?.at(-1)
 
   return { workspace, pageId }
 }
